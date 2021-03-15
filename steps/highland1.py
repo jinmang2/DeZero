@@ -24,9 +24,19 @@ class Square(Function):
         return x ** 2
 
 
+class Exp(Function):
+    @overrides
+    def forward(self, x):
+        return np.exp(x)
+
+
 if __name__ == '__main__':
-    x = Variable(np.array(10))
-    f = Square()
-    y = f(x)
-    print(type(y)) # <class '__main__.Variable'>
-    print(y.data) # 100
+    A = Square()
+    B = Exp()
+    C = Square()
+
+    x = Variable(np.array(0.5))
+    a = A(x)
+    b = B(a)
+    y = C(b)
+    print(y.data) # 1.648721270700128
