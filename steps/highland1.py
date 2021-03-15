@@ -12,11 +12,14 @@ class Variable:
         self.creator = func
 
     def backward(self):
-        f = self.creator # 1. Get a function
-        if f is not None:
-            x = f.input # 2. Get the function's input
-            x.grad = f.backward(self.grad) # 3. Call the function's backward
-            x.backward()
+        funcs = [self.creator]
+        while funcs:
+            f = funcs.pop() # 1. Get a function
+            x, y = f.input, f.output # 2. Get the function's input/output
+            x.grad = f.backward(y.grad) # 3. Call the function's backward
+
+            if x.creator is not None:
+                funcs.append(x.creator)
 
 
 class Function:
@@ -24,9 +27,9 @@ class Function:
         x = input.data
         y = self.forward(x)
         output = Variable(y)
-        output.set_creator(self) # Set parent(function)
+        output.set_creator(self)
         self.input = input
-        self.output = output # Set output
+        self.output = output
         return output
 
     def forward(self, x):
