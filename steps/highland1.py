@@ -4,6 +4,10 @@ from overrides import overrides
 
 class Variable:
     def __init__(self, data):
+        # (3) Only handling ndarray
+        if data is not None and not isinstance(data, np.ndarray):
+            raise TypeError('{} is not supported'.format(type(data)))
+            
         self.data = data
         self.grad = None
         self.creator = None
@@ -12,6 +16,10 @@ class Variable:
         self.creator = func
 
     def backward(self):
+        # (2) Simplify backward method
+        if self.grad is None:
+            self.grad = np.ones_like(self.data)
+
         funcs = [self.creator]
         while funcs:
             f = funcs.pop() # 1. Get a function
@@ -22,11 +30,18 @@ class Variable:
                 funcs.append(x.creator)
 
 
+# (3) Only handling ndarray
+def as_array(x):
+    if np.isscalar(x):
+        return np.array(x)
+    return x
+
+
 class Function:
     def __call__(self, input):
         x = input.data
         y = self.forward(x)
-        output = Variable(y)
+        output = Variable(as_array(y)) # (3) Only handling ndarray
         output.set_creator(self)
         self.input = input
         self.output = output
@@ -63,6 +78,17 @@ class Exp(Function):
         return gx
 
 
+# ======================
+# (1) Using python function
+def square(x):
+    return Square()(x)
+
+
+def exp(x):
+    return Exp()(x)
+# ======================
+
+
 def numerical_diff(f, x, eps=1e-4):
     x0 = Variable(x.data - eps)
     x1 = Variable(x.data + eps)
@@ -72,16 +98,20 @@ def numerical_diff(f, x, eps=1e-4):
 
 
 if __name__ == '__main__':
-    A = Square()
-    B = Exp()
-    C = Square()
-
+    # (1) Using Python function
     x = Variable(np.array(0.5))
-    a = A(x)
-    b = B(a)
-    y = C(b)
-
-    # backward
+    y = square(exp(square(x)))
     y.grad = np.array(1.0)
     y.backward()
     print(x.grad) # 3.297442541400256
+
+    # (2) Simplify backward method
+    x = Variable(np.array(0.5))
+    y = square(exp(square(x)))
+    y.backward()
+    print(x.grad) # 3.297442541400256
+
+    # (3) Only handling ndarray
+    x = Variable(np.array(1.0))  # OK
+    x = Variable(None)  # OK
+    x = Variable(1.0)  # NG
