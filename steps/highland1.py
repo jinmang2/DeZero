@@ -6,6 +6,17 @@ class Variable:
     def __init__(self, data):
         self.data = data
         self.grad = None
+        self.creator = None
+
+    def set_creator(self, func):
+        self.creator = func
+
+    def backward(self):
+        f = self.creator # 1. Get a function
+        if f is not None:
+            x = f.input # 2. Get the function's input
+            x.grad = f.backward(self.grad) # 3. Call the function's backward
+            x.backward()
 
 
 class Function:
@@ -13,7 +24,9 @@ class Function:
         x = input.data
         y = self.forward(x)
         output = Variable(y)
+        output.set_creator(self) # Set parent(function)
         self.input = input
+        self.output = output # Set output
         return output
 
     def forward(self, x):
@@ -65,13 +78,7 @@ if __name__ == '__main__':
     b = B(a)
     y = C(b)
 
+    # backward
     y.grad = np.array(1.0)
-    b.grad = C.backward(y.grad)
-    a.grad = B.backward(b.grad)
-    x.grad = A.backward(a.grad)
+    y.backward()
     print(x.grad) # 3.297442541400256
-
-    def f(x):
-        return C(B(A(x)))
-        
-    print(numerical_diff(f, x)) # 3.2974426293330694
