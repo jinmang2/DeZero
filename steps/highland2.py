@@ -35,10 +35,8 @@ def as_array(x):
 
 
 class Function:
-    # (1) Easy to use function
     def __call__(self, *inputs):
         xs = [x.data for x in inputs]
-        # (2) Easy to use function
         ys = self.forward(*xs)
         if not isinstance(ys, tuple):
             ys = (ys,)
@@ -48,7 +46,6 @@ class Function:
             output.set_creator(self)
         self.inputs = inputs
         self.outputs = outputs
-        # (1) Easy to use function
         return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, x):
@@ -60,26 +57,14 @@ class Function:
 
 class Add(Function):
     @overrides
-    # (2) Easy to implement function
     def forward(self, x0, x1):
         y = x0 + x1
         return y
 
 
-# (3) Implement Add function
 def add(x0, x1):
     return Add()(x0, x1)
 
 
 if __name__ == '__main__':
-    """
-    기존의 test code
-    xs = [Variable(np.array(2)), Variable(np.array(3))]
-    f = Add()
-    ys = f(xs)
-    y = ys[0]
-    """
-    x0 = Variable(np.array(2))
-    x1 = Variable(np.array(3))
-    y = add(x0, x1)
-    print(y.data) # 5
+    pass
