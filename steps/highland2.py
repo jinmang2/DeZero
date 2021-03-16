@@ -27,7 +27,7 @@ class Variable:
                 gxs = (gxs,)
 
             for x, gx in zip(f.inputs, gxs):
-                x.grad = gx
+                x.grad = gx # 여기가 실수!
 
                 if x.creator is not None:
                     funcs.append(x.creator)
@@ -92,11 +92,13 @@ def add(x0, x1):
 
 
 if __name__ == '__main__':
-    x = Variable(np.array(2.0))
-    y = Variable(np.array(3.0))
+    x = Variable(np.array(3.0))
+    y = add(x, x)
+    print('y', y.data)
 
-    z = add(square(x), square(y))
-    z.backward()
-    print(z.data) # 13.0
-    print(x.grad) # 4.0
-    print(y.grad) # 6.0
+    y.backward()
+    print('x.grad', x.grad)
+    """
+    >>> y 6.0
+    >>> x.grad 1.0
+    """
