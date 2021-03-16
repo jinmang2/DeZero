@@ -14,6 +14,9 @@ class Variable:
     def set_creator(self, func):
         self.creator = func
 
+    def cleargrad(self):
+        self.grad = None
+
     def backward(self):
         if self.grad is None:
             self.grad = np.ones_like(self.data)
@@ -27,7 +30,10 @@ class Variable:
                 gxs = (gxs,)
 
             for x, gx in zip(f.inputs, gxs):
-                x.grad = gx # 여기가 실수!
+                if x.grad is None:
+                    x.grad = gx
+                else:
+                    x.grad = x.grad + gx
 
                 if x.creator is not None:
                     funcs.append(x.creator)
@@ -94,11 +100,14 @@ def add(x0, x1):
 if __name__ == '__main__':
     x = Variable(np.array(3.0))
     y = add(x, x)
-    print('y', y.data)
-
     y.backward()
-    print('x.grad', x.grad)
-    """
-    >>> y 6.0
-    >>> x.grad 1.0
-    """
+    print(x.grad) # 2.0
+
+    y = add(add(x, x), x)
+    y.backward()
+    print(x.grad) # 5.0
+
+    x.cleargrad() # Initialize x's gradient
+    y = add(add(x, x), x)
+    y.backward()
+    print(x.grad) # 3.0
