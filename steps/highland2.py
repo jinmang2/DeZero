@@ -55,6 +55,22 @@ class Function:
         raise NotImplementedError()
 
 
+class Square(Function):
+    def forward(self, x):
+        y = x ** 2
+        return y
+
+    def backward(self, gy):
+        x = self.input.data
+        gx = 2 * x * gy
+        return gx
+
+
+def square(x):
+    f = Square()
+    return f(x)
+
+
 class Add(Function):
     @overrides
     def forward(self, x0, x1):
