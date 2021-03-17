@@ -23,7 +23,7 @@ class Variable:
 
         funcs = [self.creator]
         while funcs:
-            f = funcs.pop()
+            f = funcs.pop() # Difficult to handle complex computational graphs
             gys = [output.grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
@@ -36,7 +36,7 @@ class Variable:
                     x.grad = x.grad + gx
 
                 if x.creator is not None:
-                    funcs.append(x.creator)
+                    funcs.append(x.creator) # Difficult!
 
 
 def as_array(x):
