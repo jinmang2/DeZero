@@ -10,11 +10,11 @@ class Variable:
         self.data = data
         self.grad = None
         self.creator = None
-        self.generation = 0 # (1) Instance variable which records the number of generation
+        self.generation = 0
 
     def set_creator(self, func):
         self.creator = func
-        self.generation = func.generation + 1 # (1) Record the generation (parents + 1) (1)
+        self.generation = func.generation + 1
 
     def cleargrad(self):
         self.grad = None
@@ -23,7 +23,7 @@ class Variable:
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        funcs = [] # (3) Variable.backward method
+        funcs = []
         seen_set = set()
 
         def add_func(f):
@@ -35,7 +35,7 @@ class Variable:
         add_func(self.creator)
 
         while funcs:
-            f = funcs.pop() # Difficult to handle complex computational graphs
+            f = funcs.pop()
             gys = [output.grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
@@ -48,7 +48,7 @@ class Variable:
                     x.grad = x.grad + gx
 
                 if x.creator is not None:
-                    add_func(x.creator) # Before: funcs.append(x.creator)
+                    add_func(x.creator)
 
 
 def as_array(x):
@@ -65,7 +65,7 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
-        self.generation = max([x.generation for x in inputs]) # (1)
+        self.generation = max([x.generation for x in inputs])
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
@@ -111,24 +111,4 @@ def add(x0, x1):
 
 
 if __name__ == '__main__':
-    # (2) Dummy DeZero Test
-    generations = [2, 0, 1, 4, 2]
-    funcs = []
-    for g in generations:
-        f = Function() # Dummy function class
-        f.generation = g
-        funcs.append(f)
-    print([f.generation for f in funcs]) # [2, 0, 1, 4, 2]
-    funcs.sort(key=lambda x: x.generation) # Sort list
-    print([f.generation for f in funcs]) # [0, 1, 2, 2, 4]
-    f = funcs.pop() # Pop the largest value
-    print(f.generation) # 4
-
-    # (4) Operation check
-    x = Variable(np.array(2.0))
-    a = square(x)
-    y = add(square(a), square(a))
-    y.backward()
-
-    print(y.data) # 36.0
-    print(x.grad) # 64.0
+    pass
