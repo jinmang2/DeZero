@@ -23,14 +23,40 @@ def no_grad():
 
 
 class Variable:
-    def __init__(self, data):
+    def __init__(self, data, name=None):
         if data is not None and not isinstance(data, np.ndarray):
             raise TypeError('{} is not supported'.format(type(data)))
 
         self.data = data
+        self.name = name
         self.grad = None
         self.creator = None
         self.generation = 0
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    @property
+    def ndim(self):
+        return self.data.ndim
+
+    @property
+    def size(self):
+        return self.data.size
+
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    def __len__(self):
+        return len(self.data)
+
+    def __repr__(self):
+        if self.data is None:
+            return 'variable(None)'
+        p = str(self.data).replace('\n', '\n' + ' ' * 9)
+        return 'variable(' + p + ')'
 
     def set_creator(self, func):
         self.creator = func
@@ -137,28 +163,4 @@ def add(x0, x1):
 
 
 if __name__ == '__main__':
-    # (1) Delete the useless derivative
-    x0 = Variable(np.array(1.0))
-    x1 = Variable(np.array(1.0))
-    t = add(x0, x1)
-    y = add(x0, t)
-    y.backward(retain_grad=True)
-
-    print(y.grad, t.grad) # 1.0 1.0
-    print(x0.grad, x1.grad) # 2.0 1.0
-
-    x0.grad = None
-    x1.grad = None
-    t = add(x0, x1)
-    y = add(x0, t)
-    y.backward(retain_grad=False)
-
-    print(y.grad, t.grad) # None None
-    print(x0.grad, x1.grad) # 2.0 1.0
-
-    # (5) Mode change with contextmanager
-    with no_grad():
-        x = Variable(np.array(2.0))
-        y = square(x)
-        print(x.grad) # False
-        print(y.grad) # False
+    print(Variable(np.array([[2.0, 1.0], [3.0, 4.5]])))
