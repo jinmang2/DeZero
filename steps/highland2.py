@@ -1,3 +1,4 @@
+import weakref
 import numpy as np
 from overrides import overrides
 
@@ -36,7 +37,7 @@ class Variable:
 
         while funcs:
             f = funcs.pop()
-            gys = [output.grad for output in f.outputs]
+            gys = [output().grad for output in f.outputs]
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
                 gxs = (gxs,)
@@ -69,7 +70,7 @@ class Function:
         for output in outputs:
             output.set_creator(self)
         self.inputs = inputs
-        self.outputs = outputs
+        self.outputs = [weakref.ref(output) for output in outputs]
         return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, x):
@@ -111,4 +112,17 @@ def add(x0, x1):
 
 
 if __name__ == '__main__':
-    pass
+    # (4) Weakref Test
+    a = np.array([1, 2, 3])
+    b = weakref.ref(a)
+    print(b) # <weakref at 0x00000204A92B06D8; to 'numpy.ndarray' at 0x00000204A92B0670>
+    print(b()) # [1 2 3]
+
+    a = None
+    print(b) # <weakref at 0x000001C268550688; dead>
+
+    # (5) Operation check
+    for i in range(10):
+        # 덮어 씌우면서 이전의 계산 그래프를 참조하지 않게 됨
+        x = Variable(np.random.randn(10000))
+        y = square(square(square(x)))
