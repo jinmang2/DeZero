@@ -6,3 +6,5 @@
 <img src="http://image.yes24.com/goods/95343845/800x0" width=30% height=30%/>
 
 ## [제 1고지: 미분 자동 계산](https://github.com/jinmang2/DeZero/pull/1)
+
+## [제 2고지: 자연스러운 코드로](https://github.com/jinmang2/DeZero/pull/2)
