@@ -124,10 +124,10 @@ class Function:
 
         return outputs if len(outputs) > 1 else outputs[0]
 
-    def forward(self, x):
+    def forward(self, xs):
         raise NotImplementedError()
 
-    def backward(self, gy):
+    def backward(self, gys):
         raise NotImplementedError()
 
 
@@ -162,5 +162,35 @@ def add(x0, x1):
     return Add()(x0, x1)
 
 
+class Mul(Function):
+    @overrides
+    def forward(self, x0, x1):
+        y = x0 * x1
+        return y
+
+    @overrides
+    def backward(self, gy):
+        x0, x1 = self.inputs[0].data, self.inputs[1].data
+        return gy * x1, gy * x0
+
+
+def mul(x0, x1):
+    return Mul()(x0, x1)
+
+
+Variable.__add__ = add
+Variable.__mul__ = mul
+
+
 if __name__ == '__main__':
-    print(Variable(np.array([[2.0, 1.0], [3.0, 4.5]])))
+    a = Variable(np.array(3.0))
+    b = Variable(np.array(2.0))
+    c = Variable(np.array(1.0))
+
+    # y = add(mul(a, b), c)
+    y = a * b + c
+    y.backward()
+
+    print(y) # variable(7.0)
+    print(a.grad) # 2.0
+    print(b.grad) # 3.0
