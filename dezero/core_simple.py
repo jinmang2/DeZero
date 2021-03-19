@@ -1,30 +1,11 @@
 import weakref
 import numpy as np
 import contextlib
-from overrides import overrides
 
 
-# ==============================================================
-""" Package로 정리! """
-# Add import path for the dezero directory.
-if '__file__' in globals():
-    import os
-    import sys
-    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-import numpy as np
-from dezero import Variable
-
-
-x = Variable(np.array(1.0))
-y = (x + 3) ** 2
-y.backward()
-
-print(y) # variable(16.0)
-print(x.grad) # 8.0
-# ==============================================================
-
-
+# =============================================================================
+# Config
+# =============================================================================
 class Config:
     enable_backprop = True
 
@@ -43,12 +24,16 @@ def no_grad():
     return using_config('enable_backprop', False)
 
 
+# =============================================================================
+# Variable / Function
+# =============================================================================
 class Variable:
     __array_priority__ = 200
 
     def __init__(self, data, name=None):
-        if data is not None and not isinstance(data, np.ndarray):
-            raise TypeError('{} is not supported'.format(type(data)))
+        if data is not None:
+            if not isinstance(data, np.ndarray):
+                raise TypeError('{} is not supported'.format(type(data)))
 
         self.data = data
         self.name = name
@@ -105,7 +90,7 @@ class Variable:
 
         while funcs:
             f = funcs.pop()
-            gys = [output().grad for output in f.outputs] # outputs are weakref
+            gys = [output().grad for output in f.outputs]  # output is weakref
             gxs = f.backward(*gys)
             if not isinstance(gxs, tuple):
                 gxs = (gxs,)
@@ -121,7 +106,7 @@ class Variable:
 
             if not retain_grad:
                 for y in f.outputs:
-                    y().grad = None # y is weakref
+                    y().grad = None  # y is weakref
 
 
 def as_variable(obj):
@@ -162,29 +147,14 @@ class Function:
         raise NotImplementedError()
 
 
-class Square(Function):
-    def forward(self, x):
-        y = x ** 2
-        return y
-
-    def backward(self, gy):
-        x = self.inputs[0].data
-        gx = 2 * x * gy
-        return gx
-
-
-def square(x):
-    f = Square()
-    return f(x)
-
-
+# =============================================================================
+# + - * / and Operator Overload
+# =============================================================================
 class Add(Function):
-    @overrides
     def forward(self, x0, x1):
         y = x0 + x1
         return y
 
-    @overrides
     def backward(self, gy):
         return gy, gy
 
@@ -195,12 +165,10 @@ def add(x0, x1):
 
 
 class Mul(Function):
-    @overrides
     def forward(self, x0, x1):
         y = x0 * x1
         return y
 
-    @overrides
     def backward(self, gy):
         x0, x1 = self.inputs[0].data, self.inputs[1].data
         return gy * x1, gy * x0
@@ -239,7 +207,7 @@ def sub(x0, x1):
 
 def rsub(x0, x1):
     x1 = as_array(x1)
-    return sub(x1, x0)
+    return Sub()(x1, x0)
 
 
 class Div(Function):
@@ -261,7 +229,7 @@ def div(x0, x1):
 
 def rdiv(x0, x1):
     x1 = as_array(x1)
-    return div(x1, x0)
+    return Div()(x1, x0)
 
 
 class Pow(Function):
@@ -284,17 +252,14 @@ def pow(x, c):
     return Pow(c)(x)
 
 
-Variable.__add__ = add
-Variable.__radd__ = add
-Variable.__mul__ = mul
-Variable.__rmul__ = mul
-Variable.__neg__ = neg
-Variable.__sub__ = sub
-Variable.__rsub__ = rsub
-Variable.__truediv__ = div
-Variable.__rtruediv__ = rdiv
-Variable.__pow__ = pow
-
-
-if __name__ == '__main__':
-    pass
+def setup_variable():
+    Variable.__add__ = add
+    Variable.__radd__ = add
+    Variable.__mul__ = mul
+    Variable.__rmul__ = mul
+    Variable.__neg__ = neg
+    Variable.__sub__ = sub
+    Variable.__rsub__ = rsub
+    Variable.__truediv__ = div
+    Variable.__rtruediv__ = rdiv
+    Variable.__pow__ = pow
