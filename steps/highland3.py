@@ -2,43 +2,34 @@ if '__file__' in globals():
     import os, sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import numpy as np
-from dezero import Variable
+from dezero import Variable, Function
 # import dezero's simple_core explicitly
 import dezero
 
 
-def f(x):
-    y = x **4 - 2 * x ** 2
-    return y
+class Sin(Function):
+    def forward(self, x):
+        y = np.sin(x)
+        return y
+
+    def backward(self, gy):
+        x = self.inputs[0].data
+        """
+        현재의 DeZero는 아래 gradient 계산에 대해 어떠한 계산 그래프도 만들지 않음
+        """
+        gx = gy * np.cos(x)
+        """
+        아래 gx는 원래부터가 y=sin(x)의 미분! 이를 x로 또 미분한다면?
+        >>> gx.backward() # 2nd derivative
+        """
+        return gx
 
 
-def gx2(x):
-    """ 2nd derivative! """
-    return 12 * x ** 2 - 4
+def sin(x):
+    return Sin()(x)
 
 
 if __name__ == '__main__':
-    x = Variable(np.array(2.0))
-    iters = 10
-
-    for i in range(iters):
-        print(i, x)
-
-        y = f(x)
-        x.cleargrad()
-        y.backward()
-
-        x.data -= x.grad / gx2(x.data)
-
-"""
-0 variable(2.0)
-1 variable(1.4545454545454546)
-2 variable(1.1510467893775467)
-3 variable(1.0253259289766978)
-4 variable(1.0009084519430513)
-5 variable(1.0000012353089454)
-6 variable(1.000000000002289)
-7 variable(1.0)
-8 variable(1.0)
-9 variable(1.0)
-"""
+    x = Variable(np.array(1.0))
+    y = sin(x)
+    y.backward(retain_grad=True)
