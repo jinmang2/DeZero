@@ -8,3 +8,5 @@
 ## [제 1고지: 미분 자동 계산](https://github.com/jinmang2/DeZero/pull/1)
 
 ## [제 2고지: 자연스러운 코드로](https://github.com/jinmang2/DeZero/pull/2)
+
+## [제 3고지: 고차 미분 계산](https://github.com/jinmang2/DeZero/pull/3)
