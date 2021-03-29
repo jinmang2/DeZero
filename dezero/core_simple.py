@@ -31,6 +31,7 @@ class Variable:
     __array_priority__ = 200
 
     def __init__(self, data, name=None):
+        """ data와 grad 모두 ndarray 인스턴스로 저장! """
         if data is not None:
             if not isinstance(data, np.ndarray):
                 raise TypeError('{} is not supported'.format(type(data)))
@@ -74,6 +75,7 @@ class Variable:
         self.grad = None
 
     def backward(self, retain_grad=False):
+        """ backward 계산 후 미분값을 입력변수의 grad로 설정 """
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
@@ -123,8 +125,9 @@ def as_array(x):
 
 class Function:
     def __call__(self, *inputs):
+        """ forward 계산 및 Variable과 Function의 connection 만듦(creator) """
         inputs = [as_variable(x) for x in inputs]
-
+        # (1) Calculate forward pass
         xs = [x.data for x in inputs]
         ys = self.forward(*xs)
         if not isinstance(ys, tuple):
@@ -133,6 +136,7 @@ class Function:
 
         if Config.enable_backprop:
             self.generation = max([x.generation for x in inputs])
+            # (2) Create connection
             for output in outputs:
                 output.set_creator(self)
             self.inputs = inputs
